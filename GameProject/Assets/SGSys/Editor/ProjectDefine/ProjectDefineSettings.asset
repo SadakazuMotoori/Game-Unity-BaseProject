@@ -17,3 +17,7 @@ MonoBehaviour:
     define: IS_PRODUCT
     comment: "\u88FD\u54C1\u7248\u304B\u3069\u3046\u304B"
     initialValid: 0
+  - isValid: 1
+    define: GAME_DEBUG
+    comment: "\u30C7\u30D0\u30C3\u30B0\u30E2\u30FC\u30C9\u304B\u3069\u3046\u304B"
+    initialValid: 0

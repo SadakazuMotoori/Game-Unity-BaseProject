@@ -50,8 +50,14 @@ namespace SGSys
 
         public static List<ProjectDefine_TreeViewItem> MakeItemList( ProjectDefineSettings settings ) {
             List<ProjectDefine_TreeViewItem> list = new List<ProjectDefine_TreeViewItem>();
+            if ( null == settings || null == settings.items ) {
+                return list;
+            }
             int id=1;
             foreach( var item in settings.items ) {
+                if ( null == item ) {
+                    continue;
+                }
                 var listItem = new ProjectDefine_TreeViewItem( ++id, item );
                 list.Add( listItem );
             }

@@ -39,7 +39,7 @@ namespace SGSys
             assetPath = "";
             settings = null;
 
-            string[] guidList = AssetDatabase.FindAssets("ProjectDefineSettings t:ScriptableObject");
+            string[] guidList = AssetDatabase.FindAssets("ProjectDefineSettings t:ProjectDefineSettings");
             if ( guidList.Length == 0 ) {
                 return LoadState.NotExistAsset;
             }
@@ -80,19 +80,28 @@ namespace SGSys
         private void OnEnable () {
             if ( null == mSettings ) {
                 LoadSettings();
+                if ( null == mSettings ) {
+                    return;
+                }
             }
             if ( null != mTreeView ) {
                 return;
             }
-            mItemList = ProjectDefine_TreeViewItem.MakeItemList( mSettings );
+            if ( null == mItemList ) {
+                mItemList = ProjectDefine_TreeViewItem.MakeItemList( mSettings );
+            }
             mLastId = 1;
-            if ( 0 != mItemList.Count ) {
-                mLastId = mItemList[ mItemList.Count-1 ].id;
+            foreach( var item in mItemList ) {
+                item.id = ++mLastId;
             }
             mTreeView = ProjectDefine_TreeView.MakeTreeView( mItemList );
         }
 
         void OnGUI() {
+            if ( null == mSettings || null == mTreeView ) {
+                Close();
+                return;
+            }
             using ( new EditorGUILayout.HorizontalScope() ) {
                 if ( GUILayout.Button( "追加", GUILayout.MaxWidth(100) ) ) {
                     AddItem();
@@ -261,6 +270,7 @@ namespace SGSys
             PlayerSettings.SetScriptingDefineSymbols( UnityEditor.Build.NamedBuildTarget.iOS, defines );
             PlayerSettings.SetScriptingDefineSymbols( UnityEditor.Build.NamedBuildTarget.Android, defines );
             PlayerSettings.SetScriptingDefineSymbols( UnityEditor.Build.NamedBuildTarget.Standalone, defines );
+            PlayerSettings.SetScriptingDefineSymbols( UnityEditor.Build.NamedBuildTarget.NintendoSwitch, defines );
         }
 
         /// <summary>

@@ -123,7 +123,7 @@ namespace SGGames.Game.Sys
 #endif
             InitializeMainCamera();
             InitializeInputManager();
-            InitializeSoundManager();
+            // InitializeSoundManager();
             InitializeWindowManager();
             InitializeSceneTransitionManager();
 
@@ -134,11 +134,12 @@ namespace SGGames.Game.Sys
 #if !IS_PRODUCT
             _nextSceneName = "DebugTopScene";
 #else
-            _nextSceneName = "TitleScene";
+            _nextSceneName = "Title";
 #endif
             if (!SceneManager.GetSceneByName(_nextSceneName).isLoaded)
             {
    //             ISceneTransitionManager.Instance.RequestSceneChange(_nextSceneName,0).Forget();
+                ISceneTransitionManager.Instance.RequestSceneChange(_nextSceneName,0).Forget();
             }
         }
 
@@ -152,6 +153,7 @@ namespace SGGames.Game.Sys
 
             // 何らかの理由でPlayerInputManagerが先に存在している場合も、重複生成しない.
     //        if (IPlayerInputManager.Instance != null)
+            if (IPlayerInputManager.Instance != null)
             {
                 return;
             }
@@ -198,6 +200,7 @@ namespace SGGames.Game.Sys
 
             // 何らかの理由でCameraManagerが先に存在している場合も、重複生成しない.
     //        if (ICameraManager.Instance != null)
+            if (ICameraManager.Instance != null)
             {
                 return;
             }
@@ -221,6 +224,7 @@ namespace SGGames.Game.Sys
 
             // 何らかの理由でWindowManagerが先に存在している場合も、重複生成しない.
     //        if (IWindowManager.Instance != null)
+            if (IWindowManager.Instance != null)
             {
                 return;
             }
@@ -243,6 +247,7 @@ namespace SGGames.Game.Sys
             }
 
     //        if (ISceneTransitionManager.Instance != null)
+            if (ISceneTransitionManager.Instance != null)
             {
                 return;
             }
@@ -265,6 +270,7 @@ namespace SGGames.Game.Sys
             }
 
     //        if (IGameManager.Instance != null)
+            if (IGameManager.Instance != null)
             {
                 return;
             }
@@ -288,6 +294,7 @@ namespace SGGames.Game.Sys
             }
 
     //        if (IDebugSystemManager.Instance != null)
+            if (IDebugSystemManager.Instance != null)
             {
                 return;
             }

@@ -21,3 +21,7 @@ MonoBehaviour:
     define: GAME_DEBUG
     comment: "\u30C7\u30D0\u30C3\u30B0\u30E2\u30FC\u30C9\u304B\u3069\u3046\u304B"
     initialValid: 0
+  - isValid: 1
+    define: UNITASK_DOTWEEN_SUPPORT
+    comment: "UniTaskからDOTweenの完了を待機する"
+    initialValid: 1

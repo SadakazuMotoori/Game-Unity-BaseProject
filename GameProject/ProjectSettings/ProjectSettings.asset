@@ -835,23 +835,23 @@ PlayerSettings:
   webEnableSubmoduleStrippingCompatibility: 0
   webProgressiveAssetLoading: 0
   scriptingDefineSymbols:
-    Android: GAME_DEBUG
+    Android: GAME_DEBUG;UNITASK_DOTWEEN_SUPPORT
     EmbeddedLinux: DOTWEEN
     GameCoreScarlett: DOTWEEN
     GameCoreXboxOne: DOTWEEN
     Kepler: DOTWEEN
     LinuxHeadlessSimulation: DOTWEEN
-    Nintendo Switch: GAME_DEBUG
+    Nintendo Switch: GAME_DEBUG;UNITASK_DOTWEEN_SUPPORT
     Nintendo Switch 2: DOTWEEN
     PS4: DOTWEEN
     PS5: DOTWEEN
     QNX: DOTWEEN
-    Standalone: GAME_DEBUG
+    Standalone: GAME_DEBUG;UNITASK_DOTWEEN_SUPPORT
     VisionOS: DOTWEEN
     WebGL: DOTWEEN
     Windows Store Apps: DOTWEEN
     XboxOne: DOTWEEN
-    iPhone: GAME_DEBUG
+    iPhone: GAME_DEBUG;UNITASK_DOTWEEN_SUPPORT
     tvOS: DOTWEEN
   additionalCompilerArguments: {}
   platformArchitecture: {}

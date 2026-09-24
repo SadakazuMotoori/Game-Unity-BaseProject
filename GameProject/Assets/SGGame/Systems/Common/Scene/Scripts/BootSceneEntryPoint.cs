@@ -15,7 +15,9 @@ using Cysharp.Threading.Tasks;
 using MackySoft.Navigathena.SceneManagement.Utilities;
 using MackySoft.Navigathena.SceneManagement.VContainer;
 using System.Threading;
+#if UNITY_EDITOR
 using UnityEditor.SceneManagement;
+#endif
 using UnityEngine.SceneManagement;
 using VContainer.Unity;
 
@@ -59,7 +61,8 @@ namespace SGGames.Game.Sys
             // PersistentSceneのLifetimeScopeコンテナを構築する.
             if (persistentScene.TryGetComponentInScene(out LifetimeScope persistentLifetimeScope, true) && persistentLifetimeScope.Container == null)
             {
-                await UniTask.RunOnThreadPool(() => persistentLifetimeScope.Build(), cancellationToken: cancellationToken);
+                await UniTask.SwitchToMainThread(cancellationToken);
+                persistentLifetimeScope.Build();
             }
             return persistentLifetimeScope;
         }

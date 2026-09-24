@@ -43,7 +43,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 84d883c4353ee1849a77ef58f347e12c, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RootSceneEntryPoint
+  m_EditorClassIdentifier: Assembly-CSharp::SGGames.Game.Sys.PersistentSceneLifetimeScope
   parentReference:
     TypeName: 
   autoRun: 1

@@ -92,4 +92,4 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6c50be93558015442ba6d4cc69549b83, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BootSceneEntryPoint
+  m_EditorClassIdentifier: Assembly-CSharp::SGGames.Game.Sys.BootSceneEntryPoint

@@ -53,7 +53,7 @@ public sealed class TemplateSceneEntoryPoint : SceneEntryPointBase
 
     public void OnButton01(string aa)
     {
-        if(UnityEngine.InputSystem.Keyboard.current.aKey.wasPressedThisFrame)
+        if(UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.aKey.wasPressedThisFrame)
         {
         }
     }

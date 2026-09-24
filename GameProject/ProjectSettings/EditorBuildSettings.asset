@@ -6,7 +6,19 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/SGGame/Scenes/SampleScene.unity
-    guid: 99c9720ab356a0642a771bea13969a05
+    path: Assets/SGGame/Scenes/BootScene.unity
+    guid: b5e6394011402304aac24bbd76694372
+  - enabled: 1
+    path: Assets/SGGame/Scenes/GameScenes/PersistentScene.unity
+    guid: fd3b2682120fb2740a199420cacab14c
+  - enabled: 1
+    path: Assets/SGGame/Scenes/DebugScenes/DebugTopScene.unity
+    guid: 4e9ad435a9826374ab6d2b64a1d55590
+  - enabled: 1
+    path: Assets/SGGame/Scenes/DebugScenes/SubScenes/SoundCheck/SoundCheckScene.unity
+    guid: 8a4ce86d7dcfaa04c860911faf760d39
+  - enabled: 1
+    path: Assets/SGGame/Scenes/GameScenes/TitleScene/Title.unity
+    guid: 64c43e606c5539c419d73cdd23db4841
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

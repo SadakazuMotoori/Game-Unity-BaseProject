@@ -196,7 +196,10 @@ namespace SGGames.Game.Sys
             // 破棄中や無効化中にnull扱いになっても、安全に無視する。
             if (mainCamera == null) return;
 
-            _managedMainCameras.Remove(mainCamera);
+            if (_managedMainCameras.Remove(mainCamera) && mainCamera.Cam != null)
+            {
+                mainCamera.Cam.enabled = false;
+            }
 
             // 現在のメインカメラ候補を再評価する.
             UpdateManagedMainCameraList();

@@ -180,7 +180,8 @@ namespace SGGames.Game.Sys
         //
         //==========================================
         // 非同期処理中か
-        bool _nowProcessing;
+        bool _nowProcessing => _processingCount > 0;
+        int _processingCount;
 
         [System.NonSerialized]
         public Subject<Actions> _onNotifyEvent = new();
@@ -196,7 +197,7 @@ namespace SGGames.Game.Sys
             var cancelToken = gameObject.GetCancellationTokenOnDestroy();
             return _onNotifyEvent.Subscribe(async s =>
             {
-                _nowProcessing = true;
+                _processingCount++;
                 try
                 {
                     await selectable(s).AttachExternalCancellation(cancelToken);
@@ -210,7 +211,7 @@ namespace SGGames.Game.Sys
                 }
                 finally
                 {
-                    _nowProcessing = false;
+                    _processingCount--;
                 }
             }).AddTo(this);
         }

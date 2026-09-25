@@ -67,12 +67,12 @@ namespace SGGames.Game.Sys
 
         public override async UniTask OnShow()
         {
-            await TopUITransform.DOLocalMoveY(500, 0.1f).From().SetLink(gameObject);
+            await TopUITransform.DOLocalMoveY(500, 0.1f).From().SetUpdate(true).SetLink(gameObject);
         }
 
         public override async UniTask OnClose()
         {
-            await TopUITransform.DOLocalMoveY(-500, 0.1f).SetRelative().SetLink(gameObject);
+            await TopUITransform.DOLocalMoveY(-500, 0.1f).SetRelative().SetUpdate(true).SetLink(gameObject);
         }
 
         //==========================================================================

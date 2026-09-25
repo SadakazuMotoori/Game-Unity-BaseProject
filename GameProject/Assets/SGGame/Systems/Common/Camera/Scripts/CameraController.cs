@@ -41,7 +41,17 @@ namespace SGGames.Game.Sys
         //==========================================================================
         public CameraData GetCamera(CameraData.eCameraID camid)
         {
-            return GetCameraData((int)camid);
+            if (m_CameraTable == null) return null;
+
+            foreach (var cameraData in m_CameraTable)
+            {
+                if (cameraData != null && cameraData.CameraID == camid)
+                {
+                    return cameraData;
+                }
+            }
+
+            return null;
         }
         public CameraData NormalCamera  { get { return GetCamera(CameraData.eCameraID.Normal); } }
         public CameraData DemoCamera    { get { return GetCamera(CameraData.eCameraID.Demo); } }

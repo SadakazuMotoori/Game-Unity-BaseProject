@@ -187,6 +187,7 @@ namespace SGGames.Game.Sys
             XBOX,
             PlayStation,
             Switch,
+            Gamepad,
 
             _Count_,
         }
@@ -197,6 +198,7 @@ namespace SGGames.Game.Sys
         private InputAction _deletectionXBOX = new InputAction(type: InputActionType.PassThrough, binding: "<XInputController>/*", interactions: "Press");
         private InputAction _deletectionDS = new InputAction(type: InputActionType.PassThrough, binding: "<DualShockGamepad>/*", interactions: "Press");
         private InputAction _deletectionSwitch = new InputAction(type: InputActionType.PassThrough, binding: "<SwitchProControllerHID>/*", interactions: "Press");
+        private InputAction _deletectionGamepad = new InputAction(type: InputActionType.PassThrough, binding: "<Gamepad>/*", interactions: "Press");
 
         // 直近の入力デバイスがキーボード/マウス系かどうか.
         public bool IsNowKeyboardMouseMode => _lastInputDevice == DevideTypes.Keyboard;
@@ -252,6 +254,7 @@ namespace SGGames.Game.Sys
             _deletectionXBOX.Enable();
             _deletectionDS.Enable();
             _deletectionSwitch.Enable();
+            _deletectionGamepad.Enable();
         }
 
         private void OnDestroy()
@@ -269,6 +272,7 @@ namespace SGGames.Game.Sys
             _deletectionXBOX.Dispose();
             _deletectionDS.Dispose();
             _deletectionSwitch.Dispose();
+            _deletectionGamepad.Dispose();
             _onChangeDevice.Dispose();
         }
 
@@ -281,7 +285,14 @@ namespace SGGames.Game.Sys
             }
 
             // 入力デバイスを判定する.
-            if (_deletectionKeyboard.triggered || (Mouse.current != null && Mouse.current.delta.magnitude > 0))
+            if (_deletectionKeyboard.triggered || (Mouse.current != null &&
+                (Mouse.current.delta.magnitude > 0 ||
+                 Mouse.current.leftButton.wasPressedThisFrame ||
+                 Mouse.current.rightButton.wasPressedThisFrame ||
+                 Mouse.current.middleButton.wasPressedThisFrame ||
+                 Mouse.current.forwardButton.wasPressedThisFrame ||
+                 Mouse.current.backButton.wasPressedThisFrame ||
+                 Mouse.current.scroll.magnitude > 0)))
             {
                 if (_lastInputDevice != DevideTypes.Keyboard)
                 {
@@ -347,6 +358,21 @@ namespace SGGames.Game.Sys
 #endif
                     _onChangeDevice.OnNext(DevideTypes.Switch);
                     _lastInputDevice = DevideTypes.Switch;
+                }
+            }
+            else if (_deletectionGamepad.triggered)
+            {
+                if (_lastInputDevice != DevideTypes.Gamepad)
+                {
+                    if (Cursor.lockState == CursorLockMode.None)
+                    {
+                        Cursor.visible = false;
+                    }
+#if GAME_DEBUG && !IS_PRODUCT
+                    DebugLog.Info(SystemConst.DebugGroup.System,"[Inputデバイス変更]ゲームパッド");
+#endif
+                    _onChangeDevice.OnNext(DevideTypes.Gamepad);
+                    _lastInputDevice = DevideTypes.Gamepad;
                 }
             }
         }

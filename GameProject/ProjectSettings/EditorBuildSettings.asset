@@ -21,4 +21,5 @@ EditorBuildSettings:
     path: Assets/SGGame/Scenes/GameScenes/TitleScene/Title.unity
     guid: 64c43e606c5539c419d73cdd23db4841
   m_configObjects:
+    com.unity.addressableassets: {fileID: 11400000, guid: 2066719c40316e94c8f3160f9b2f7296, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

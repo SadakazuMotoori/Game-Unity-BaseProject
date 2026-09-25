@@ -29,6 +29,7 @@ namespace SGGames.Game.Develop
         [SerializeField] TextMeshProUGUI _item1Text;
         [SerializeField] TextMeshProUGUI _item2Text;
         [SerializeField] TextMeshProUGUI _item3Text;
+        [SerializeField] DebugSystemCheckController _systemChecks;
 
         int _selectedIndex;
         TextMeshProUGUI[] _itemTexts;
@@ -58,6 +59,8 @@ namespace SGGames.Game.Develop
 
         private void Update()
         {
+            if (_systemChecks != null && _systemChecks.IsOpen) return;
+
             // 常駐システムは具象クラスではなく、ServiceLocator経由のInterfaceから取得する.
             IPlayerInputManager inputManager = IPlayerInputManager.Instance;
             if (_itemTexts == null || inputManager == null)
@@ -78,7 +81,11 @@ namespace SGGames.Game.Develop
             }
             else if (inputUI.Decide || (inputManager.IsInputBlocked == false && UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.enterKey.wasPressedThisFrame))
             {
-                if (_selectedIndex == kSoundCheckIndex && ISceneTransitionManager.Instance != null)
+                if (_selectedIndex == 0 && _systemChecks != null)
+                {
+                    _systemChecks.Open();
+                }
+                else if (_selectedIndex == kSoundCheckIndex && ISceneTransitionManager.Instance != null)
                 {
                     ISceneTransitionManager.Instance.RequestSceneChange(kSoundCheckSceneName).Forget();
                 }

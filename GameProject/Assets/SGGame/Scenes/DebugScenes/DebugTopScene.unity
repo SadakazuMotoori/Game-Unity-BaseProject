@@ -129,6 +129,7 @@ GameObject:
   m_Component:
   - component: {fileID: 31855872}
   - component: {fileID: 31855873}
+  - component: {fileID: 31855874}
   m_Layer: 0
   m_Name: DebugController
   m_TagString: Untagged
@@ -167,6 +168,20 @@ MonoBehaviour:
   _item1Text: {fileID: 1922504823}
   _item2Text: {fileID: 1922504833}
   _item3Text: {fileID: 1922504843}
+  _systemChecks: {fileID: 31855874}
+--- !u!114 &31855874
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 31855871}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d61bc5857f34d2491c1e44f801b8a97, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::SGGames.Game.Develop.DebugSystemCheckController
+  _font: {fileID: 11400000, guid: 2da78f2acb3fe2e4baaf2545d85ebb00, type: 2}
 --- !u!1 &1906614239
 GameObject:
   m_ObjectHideFlags: 0
@@ -692,7 +707,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u30AD\u30E3\u30E9\u30AF\u30BF\u30FC\u30C1\u30A7\u30C3\u30AF"
+  m_text: "\u30B7\u30B9\u30C6\u30E0\u30C1\u30A7\u30C3\u30AF"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 2da78f2acb3fe2e4baaf2545d85ebb00, type: 2}
   m_sharedMaterial: {fileID: 4701157601414680301, guid: 2da78f2acb3fe2e4baaf2545d85ebb00, type: 2}

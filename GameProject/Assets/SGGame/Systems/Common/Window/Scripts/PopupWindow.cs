@@ -80,9 +80,9 @@ namespace SGGames.Game.Sys
          *    @brief       Run中の更新処理.
          */
         //==========================================================================
-        public virtual async UniTask OnUpdate()
+        public virtual UniTask OnUpdate()
         {
-            await UniTask.DelayFrame(1);
+            return UniTask.CompletedTask;
         }
 
         //==========================================================================
@@ -92,11 +92,10 @@ namespace SGGames.Game.Sys
          *    @return      falseの場合はWindowを閉じる.
          */
         //==========================================================================
-        public virtual async UniTask<bool> OnDecide(UISelectable selectable)
+        public virtual UniTask<bool> OnDecide(UISelectable selectable)
         {
             // falseを返すとRun側でこのWindowを閉じ、選択結果を呼び出し元へ返す.
-            await UniTask.DelayFrame(1);
-            return true;
+            return UniTask.FromResult(true);
         }
 
         //==========================================================================
@@ -108,34 +107,47 @@ namespace SGGames.Game.Sys
         public async UniTask<(int IDInt, string IDString)> Run()
         {
             // SelectableGroupを使い、カーソル移動・決定・Window終了までを1つのループで扱う.
-            var cancelToken = this.GetCancellationTokenOnDestroy();
+            var cancelToken = gameObject.GetCancellationTokenOnDestroy();
 
-            // SelectableGroupの初期化完了を待つ.
-            await _selectableGroup.WaitForInitialized();
-
-            // Windowが破棄されるまで入力処理を続ける.
-            while (cancelToken.IsCancellationRequested == false)
+            try
             {
-                // カーソル入力を処理する.
-                var retCursor = await _selectableGroup.UpdateCursor();
+                cancelToken.ThrowIfCancellationRequested();
+                // SelectableGroupの初期化完了を待つ.
+                await _selectableGroup.WaitForInitialized().AttachExternalCancellation(cancelToken);
+                cancelToken.ThrowIfCancellationRequested();
 
-                // Window固有の更新処理を実行する.
-                await OnUpdate();
-
-                // 決定入力があれば選択結果を処理する.
-                if (retCursor.action == UISelectable.Actions.Decide)
+                // Windowが破棄されるまで入力処理を続ける.
+                while (cancelToken.IsCancellationRequested == false)
                 {
-                    // 決定処理がfalseを返した場合はWindowを閉じる.
-                    if(await OnDecide(retCursor.select) == false)
-                    {
-                        // Windowを閉じる.
-                        await CloseWindow();
-                        // 選択結果を返す.
-                        return (retCursor.select.IDInt, retCursor.select.IDString);
-                    }
-                }
+                    // カーソル入力を処理する.
+                    var retCursor = await _selectableGroup.UpdateCursor().AttachExternalCancellation(cancelToken);
+                    cancelToken.ThrowIfCancellationRequested();
 
-                await UniTask.DelayFrame(1);
+                    // Window固有の更新処理を実行する.
+                    await OnUpdate().AttachExternalCancellation(cancelToken);
+                    cancelToken.ThrowIfCancellationRequested();
+
+                    // 決定入力があれば選択結果を処理する.
+                    if (retCursor.action == UISelectable.Actions.Decide)
+                    {
+                        bool keepOpen = await OnDecide(retCursor.select).AttachExternalCancellation(cancelToken);
+                        cancelToken.ThrowIfCancellationRequested();
+                        // 決定処理がfalseを返した場合はWindowを閉じる.
+                        if(keepOpen == false)
+                        {
+                            var result = (retCursor.select.IDInt, retCursor.select.IDString);
+                            // Windowを閉じる.
+                            await CloseWindow();
+                            // 選択結果を返す.
+                            return result;
+                        }
+                    }
+
+                    await UniTask.DelayFrame(1, cancellationToken: cancelToken);
+                }
+            }
+            catch (System.OperationCanceledException) when (cancelToken.IsCancellationRequested)
+            {
             }
 
             return (-1, "");

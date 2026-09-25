@@ -207,11 +207,12 @@ namespace SGGames.Game.Sys
         // イベント発行
         public async UniTask NotifyEvent(Actions action)
         {
+            var cancelToken = gameObject.GetCancellationTokenOnDestroy();
             _onNotifyEvent.OnNext(action);
             // 待つ
             if (_nowProcessing)
             {
-                await UniTask.WaitWhile(() => _nowProcessing);
+                await UniTask.WaitWhile(() => _nowProcessing, cancellationToken: cancelToken);
             }
         }
 
@@ -526,6 +527,7 @@ namespace SGGames.Game.Sys
 
             // 決定時 通知
             await NotifyEvent(Actions.Decide);
+            if (cancelToken.IsCancellationRequested) return;
 
             /*
             // 特殊処理

@@ -129,7 +129,7 @@ namespace SGGames.Game.Sys
                 {
                     Debug.Log("変更");
                     OnSelectChanged.OnNext(selectable);
-                });
+                }).AddTo(this);
 
             // 選択変更時(↑以外でもイベント発生するため)
             OnSelectChanged.Subscribe(_ =>

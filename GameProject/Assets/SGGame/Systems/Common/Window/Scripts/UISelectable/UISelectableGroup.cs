@@ -23,9 +23,9 @@ namespace SGGames.Game.Sys
         [Header("初期選択")]
         [SerializeField] UISelectable _firstSelected;
 
-    //    [Header("サウンド")]
-    //    [SerializeField] ISoundManager.UISEs _uiseCursorMove = ISoundManager.UISEs.Select01;
-    //    [SerializeField] ISoundManager.UISEs _uiseDisable = ISoundManager.UISEs.Error01;
+        [Header("サウンド")]
+        [SerializeField] string _uiseCursorMove = "Select01";
+        [SerializeField] string _uiseDisable = "Error01";
 
         [Header("連動カーソル")]
         [SerializeField] CursorObjectData _cursorObjectData;
@@ -151,9 +151,8 @@ namespace SGGames.Game.Sys
             // 選択変更時(↑以外でもイベント発生するため)
             OnSelectChanged.Subscribe(_ =>
             {
-    //            ISoundManager.Instance.PlaySE_2D(
-    //                ISoundManager.Instance.GetUISE(_uiseCursorMove)
-    //            );
+                if (CanReceiveInput)
+                    ISoundManager.Instance?.PlaySE_2D(_uiseCursorMove);
             });
 
 
@@ -381,9 +380,7 @@ namespace SGGames.Game.Sys
                             else
                             {
                                 // SE
-    //                            ISoundManager.Instance.PlaySE_2D(
-    //                                ISoundManager.Instance.GetUISE(_uiseDisable)
-    //                            );
+                                ISoundManager.Instance?.PlaySE_2D(_uiseDisable);
 
                                 await CurrentSelected.NotifyEvent(UISelectable.Actions.CantDecide).AttachExternalCancellation(cancelToken);
 
@@ -399,9 +396,7 @@ namespace SGGames.Game.Sys
                             else
                             {
                                 // SE
-    //                            ISoundManager.Instance.PlaySE_2D(
-    //                                ISoundManager.Instance.GetUISE(_uiseDisable)
-    //                            );
+                                ISoundManager.Instance?.PlaySE_2D(_uiseDisable);
                                 return (UISelectable.Actions.None, null);
                             }
                         }
@@ -431,9 +426,7 @@ namespace SGGames.Game.Sys
                             if (CurrentSelected.IsInteractable() == false)
                             {
                                 // SE
-    //                            ISoundManager.Instance.PlaySE_2D(
-    //                                ISoundManager.Instance.GetUISE(_uiseDisable)
-    //                            );
+                                ISoundManager.Instance?.PlaySE_2D(_uiseDisable);
 
                                 await CurrentSelected.NotifyEvent(UISelectable.Actions.CantDecide).AttachExternalCancellation(cancelToken);
                             }
@@ -455,9 +448,7 @@ namespace SGGames.Game.Sys
                             else
                             {
                                 // SE
-    //                            ISoundManager.Instance.PlaySE_2D(
-    //                                ISoundManager.Instance.GetUISE(_uiseDisable)
-    //                            );
+                                ISoundManager.Instance?.PlaySE_2D(_uiseDisable);
 
                                 return (UISelectable.Actions.None, null);
                             }

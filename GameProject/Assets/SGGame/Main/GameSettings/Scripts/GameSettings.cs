@@ -149,6 +149,7 @@ namespace SGGames.Game
         {
             mLanguage = (Language)PlayerPrefs.GetInt("Language", (int)Language.Japanese );
             mSound.Load();
+            ApplySoundSettings();
 /*
             mGraphics.Load();
             mPlay.Load();

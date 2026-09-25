@@ -12,9 +12,11 @@
 //*****************************************************************************************************************
 //*****************************************************************************************************************
 using UnityEngine;
-#if false
 using CriWare;
-#endif
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 
 using SGSys;
 
@@ -43,12 +45,14 @@ namespace SGGames.Game.Sys
     //==========================================================================
     public interface ISoundManager : IService<ISoundManager>
     {
+        UniTask WaitUntilReady(CancellationToken cancellationToken);
         void Play(SoundCategory category, string cueName);
         void Stop(SoundCategory category);
         void PlayBGM(string cueName);
         void StopBGM();
         void PlaySE_2D(string cueName);
         void StopSE();
+        void SetVolume(SoundCategory category, float volume);
     }
 
     //==========================================================================
@@ -62,10 +66,8 @@ namespace SGGames.Game.Sys
         [Header("ADX")]
         [SerializeField] string _acfFile = "";
 
-#if false
         CriAtom _criAtom;
         CriAtomSource[] _sources;
-#endif
 
         readonly struct CueSheetDefinition
         {
@@ -101,12 +103,10 @@ namespace SGGames.Game.Sys
                 return;
             }
 
-            ServiceLocator<ISoundManager>.Register(this);
-
-#if false
             InitializeCriAtom();
             InitializeSources();
-#endif
+
+            ServiceLocator<ISoundManager>.Register(this);
         }
 
         void OnDestroy()
@@ -116,6 +116,12 @@ namespace SGGames.Game.Sys
             {
                 ServiceLocator<ISoundManager>.Unregister();
             }
+        }
+
+        public async UniTask WaitUntilReady(CancellationToken cancellationToken)
+        {
+            using var linkedCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, this.GetCancellationTokenOnDestroy());
+            await UniTask.WaitUntil(() => !CriAtom.CueSheetsAreLoading, cancellationToken: linkedCancellation.Token);
         }
 
         public void PlayBGM(string cueName)
@@ -142,27 +148,33 @@ namespace SGGames.Game.Sys
         {
             if (string.IsNullOrEmpty(cueName)) return;
 
-#if false
             CriAtomSource source = GetSource(category);
-            if (source == null) return;
+            if (source == null || _criAtom == null) return;
 
             source.cueSheet = GetCueSheetName(category);
+            CriAtomCueSheet cueSheet = System.Array.Find(_criAtom.cueSheets, sheet => sheet.name == source.cueSheet);
+            if (cueSheet?.acb == null || !cueSheet.acb.Exists(cueName)) return;
+
             source.loop = GetDefaultLoop(category);
             source.Play(cueName);
-#endif
         }
 
         public void Stop(SoundCategory category)
         {
-#if false
             CriAtomSource source = GetSource(category);
             if (source == null) return;
 
             source.Stop();
-#endif
         }
 
-#if false
+        public void SetVolume(SoundCategory category, float volume)
+        {
+            CriAtomSource source = GetSource(category);
+            if (source == null) return;
+
+            source.volume = Mathf.Clamp01(volume);
+        }
+
         void InitializeCriAtom()
         {
             CriAtomCueSheet[] cueSheets = CreateCueSheets();
@@ -206,20 +218,32 @@ namespace SGGames.Game.Sys
 
         CriAtomCueSheet[] CreateCueSheets()
         {
-            CriAtomCueSheet[] cueSheets = new CriAtomCueSheet[s_cueSheetDefinitions.Length];
+            List<CriAtomCueSheet> cueSheets = new();
+            string streamingAssetsPath = CriWare.Common.streamingAssetsPath;
+            bool canCheckFiles = !string.IsNullOrEmpty(streamingAssetsPath) && !streamingAssetsPath.Contains("://");
 
             for (int i = 0; i < s_cueSheetDefinitions.Length; i++)
             {
                 CueSheetDefinition definition = s_cueSheetDefinitions[i];
-                cueSheets[i] = new CriAtomCueSheet
+                if (canCheckFiles && !File.Exists(Path.Combine(streamingAssetsPath, definition.AcbFile))) continue;
+
+                string awbFile = definition.AwbFile;
+                if (canCheckFiles && !File.Exists(Path.Combine(streamingAssetsPath, awbFile))) awbFile = "";
+
+                cueSheets.Add(new CriAtomCueSheet
                 {
                     name = definition.CueSheetName,
                     acbFile = definition.AcbFile,
-                    awbFile = definition.AwbFile,
-                };
+                    awbFile = awbFile,
+                });
             }
 
-            return cueSheets;
+            if (cueSheets.Count == 0)
+            {
+                DebugLog.Warning(SystemConst.DebugGroup.System, "SoundManager : キューシートが未配置のため、音声は再生されません。");
+            }
+
+            return cueSheets.ToArray();
         }
 
         CriAtomSource GetSource(SoundCategory category)
@@ -230,7 +254,6 @@ namespace SGGames.Game.Sys
 
             return _sources[index];
         }
-#endif
 
         string GetCueSheetName(SoundCategory category)
         {

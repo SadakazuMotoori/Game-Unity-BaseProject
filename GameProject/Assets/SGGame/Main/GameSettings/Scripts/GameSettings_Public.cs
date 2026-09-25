@@ -24,8 +24,8 @@ namespace SGGames.Game
             Instance.mGraphics.Save();
             Instance.mPlay.Save();
             Instance.mNotification.Save();
-            Instance.mSound.Save();
 */           
+            Instance.mSound.Save();
         }
         /// <summary>
         /// 設定内容の退避
@@ -35,8 +35,8 @@ namespace SGGames.Game
 /*            
             Instance.mGraphics.Push();
             Instance.mPlay.Push();
-            Instance.mSound.Push();
 */            
+            Instance.mSound.Push();
         }
 
         /// <summary>
@@ -47,8 +47,9 @@ namespace SGGames.Game
 /*
             Instance.mGraphics.Pop();
             Instance.mPlay.Pop();
-            Instance.mSound.Pop();
 */
+            Instance.mSound.Pop();
+            ApplySoundSettings();
         }
 
         /// <summary>
@@ -58,7 +59,10 @@ namespace SGGames.Game
         {
 /*
             Instance.mGraphics.ResetSettings();
+*/
             Instance.mSound.ResetSettings();
+            ApplySoundSettings();
+/*
             Instance.mPlay.ResetSettings();
 */   
         }
@@ -68,9 +72,8 @@ namespace SGGames.Game
         /// </summary>
         public static void ResetSoundSettings()
         {
-/* 
             Instance.mSound.ResetSettings();
-*/
+            ApplySoundSettings();
         }
 
 
@@ -235,7 +238,7 @@ namespace SGGames.Game
         {
             play.UpdateSnapDownloadTime();
         }
-
+*/
         #endregion
 
 
@@ -250,7 +253,7 @@ namespace SGGames.Game
             }
             set {
                 sound.bgmLevel = value;
-                GameSound.SetBgmMixerVolume( value );
+                ApplySoundSettings();
             }
         }
         /// <summary>
@@ -263,9 +266,10 @@ namespace SGGames.Game
             }
             set {
                 sound.seLevel = value;
-                GameSound.SetSeMixerVolume( value );
+                ApplySoundSettings();
             }
         }
+/*
         /// <summary>
         /// SE(バトル共通）の音量
         /// </summary>
@@ -318,7 +322,7 @@ namespace SGGames.Game
                 GameSound.SetShotMixerVolume( value );
             }
         }
-
+*/
         /// <summary>
         /// ボイス音量
         /// </summary>
@@ -329,10 +333,10 @@ namespace SGGames.Game
             }
             set {
                 sound.voiceLevel = value;
-                GameSound.SetVoiceMixerVolume( value );
+                ApplySoundSettings();
             }
         }
-
+/*
         /// <summary>
         /// 合いの手音量
         /// </summary>
@@ -346,6 +350,7 @@ namespace SGGames.Game
                 GameSound.SetClapMixerVolume( value );
             }
         }
+*/
         #endregion
 
 
@@ -354,6 +359,7 @@ namespace SGGames.Game
 
 
         #region Graphics
+/*
         /// <summary>
         /// 描画設定レベル
         /// VeryLow～VeryHighはテーブルに従った値でしか設定できない

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using SGGames.Game.Sys;
 
 namespace SGGames.Game
 {
@@ -8,6 +9,16 @@ namespace SGGames.Game
     /// </summary>
     public sealed partial class GameSettings : MonoBehaviour
     {
+        static void ApplySoundSettings()
+        {
+            ISoundManager soundManager = ISoundManager.Instance;
+            if (soundManager == null) return;
+
+            soundManager.SetVolume(SoundCategory.BGM, sound.bgmLevel / (float)Sound.PARAM_MAX);
+            soundManager.SetVolume(SoundCategory.SE, sound.seLevel / (float)Sound.PARAM_MAX);
+            soundManager.SetVolume(SoundCategory.Voice, sound.voiceLevel / (float)Sound.PARAM_MAX);
+        }
+
         public class Sound
         {
             /// <summary>

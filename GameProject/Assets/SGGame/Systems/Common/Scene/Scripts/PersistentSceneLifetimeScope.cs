@@ -139,7 +139,11 @@ namespace SGGames.Game.Sys
             {
                 throw new InvalidOperationException("有効なPlayerInputManagerが登録されていないため、起動を中止します。");
             }
-            // InitializeSoundManager();
+            InitializeSoundManager();
+            if (!(ISoundManager.Instance is Behaviour soundManager) || !soundManager.isActiveAndEnabled)
+            {
+                throw new InvalidOperationException("有効なSoundManagerが登録されていないため、起動を中止します。");
+            }
             InitializeWindowManager();
             if (IWindowManager.Instance == null)
             {

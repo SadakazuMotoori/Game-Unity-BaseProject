@@ -57,8 +57,8 @@ namespace SGGames.Game.Sys
         [SerializeField] GameObject _highlightEffectObj;
         [SerializeField] GameObject _disableEffectObj;
 
-    //    [Header("サウンド")]
-    //    [SerializeField] ISoundManager.UISEs _uiseDecide = ISoundManager.UISEs.Decide01;
+        [Header("サウンド")]
+        [SerializeField] string _uiseDecide = "Decide01";
 
         [Header("テキストへの参照")]
         [SerializeField] TMPro.TextMeshProUGUI _uiText;
@@ -533,12 +533,8 @@ namespace SGGames.Game.Sys
 
             var cancelToken = this.GetCancellationTokenOnDestroy();
 
-            /*
             // SE
-            ISoundManager.Instance.PlaySE_2D(
-                ISoundManager.Instance.GetUISE(_uiseDecide)
-            );
-            */
+            ISoundManager.Instance?.PlaySE_2D(_uiseDecide);
 
             // 決定時 通知
             await NotifyEvent(Actions.Decide);

@@ -76,6 +76,7 @@ namespace SGGames.Game.Sys
 
             cancellationToken.ThrowIfCancellationRequested();
             persistentLifetimeScope.Initialize();
+            await ISoundManager.Instance.WaitUntilReady(cancellationToken);
             return persistentLifetimeScope;
         }
 

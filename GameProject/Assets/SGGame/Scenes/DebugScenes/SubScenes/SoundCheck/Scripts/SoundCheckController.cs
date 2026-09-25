@@ -49,7 +49,7 @@ namespace SGGames.Game.Develop
             await UniTask.CompletedTask;
 
             // BGM鳴動テスト
-            // ISoundManager.Instance.PlayBGM("BGM01");
+            ISoundManager.Instance?.PlayBGM("BGM01");
         }
 
         private void Update()

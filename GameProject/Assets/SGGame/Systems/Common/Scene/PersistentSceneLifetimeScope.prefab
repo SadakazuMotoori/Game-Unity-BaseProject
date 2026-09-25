@@ -48,9 +48,10 @@ MonoBehaviour:
     TypeName: 
   autoRun: 1
   autoInjectGameObjects: []
+  _debugSystemManagerPrefab: {fileID: 1402558103861668910, guid: 4bd0245a5d1c5e94ba78ac6783531301, type: 3}
   _mainCameraPrefab: {fileID: 3049565315612735618, guid: 0162d479f3eb0dc458aaa1904aaefb9b, type: 3}
   _inputManagerPrefab: {fileID: 5012345678901234567, guid: 8fcf909f69934877855719108cfc564d, type: 3}
   _soundManagerPrefab: {fileID: 2069406856906839868, guid: 9a6e506a79dcf054899d01c02848fa8a, type: 3}
   _windowManagerPrefab: {fileID: 5401000000000000001, guid: e51e29256ffe4af1b3408c956e8530e1, type: 3}
   _sceneTransitionManagerPrefab: {fileID: 3839099082425693125, guid: 28c1d6486235bfb4ea3927dc7b236934, type: 3}
-  _debugSystemManagerPrefab: {fileID: 1402558103861668910, guid: f6c255f119cfe4f4b96691688b5b5395, type: 3}
+  _gameManagerPrefab: {fileID: 0}

@@ -67,12 +67,12 @@ namespace SGGames.Game.Sys
 
         public override async UniTask OnShow()
         {
-            await TopUITransform.DOLocalMoveY(500, 0.1f).From();
+            await TopUITransform.DOLocalMoveY(500, 0.1f).From().SetLink(gameObject);
         }
 
         public override async UniTask OnClose()
         {
-            await TopUITransform.DOLocalMoveY(-500, 0.1f).SetRelative();
+            await TopUITransform.DOLocalMoveY(-500, 0.1f).SetRelative().SetLink(gameObject);
         }
 
         //==========================================================================
@@ -128,12 +128,12 @@ namespace SGGames.Game.Sys
                     cancelToken.ThrowIfCancellationRequested();
 
                     // 決定入力があれば選択結果を処理する.
-                    if (retCursor.action == UISelectable.Actions.Decide)
+                    if (retCursor.action == UISelectable.Actions.Decide && _selectableGroup.CanReceiveInput && retCursor.select != null)
                     {
                         bool keepOpen = await OnDecide(retCursor.select).AttachExternalCancellation(cancelToken);
                         cancelToken.ThrowIfCancellationRequested();
                         // 決定処理がfalseを返した場合はWindowを閉じる.
-                        if(keepOpen == false)
+                        if(keepOpen == false && _selectableGroup.CanReceiveInput && retCursor.select != null)
                         {
                             var result = (retCursor.select.IDInt, retCursor.select.IDString);
                             // Windowを閉じる.

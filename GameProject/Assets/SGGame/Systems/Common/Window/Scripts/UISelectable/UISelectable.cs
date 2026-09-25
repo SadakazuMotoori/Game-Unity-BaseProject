@@ -109,6 +109,8 @@ namespace SGGames.Game.Sys
             set => _nowAction = value;
         }
 
+        bool CanReceiveInput => GetOwnerGroup() != null && GetOwnerGroup().CanReceiveInput;
+
         public enum Actions
         {
             None,
@@ -191,18 +193,26 @@ namespace SGGames.Game.Sys
         // 決定やメニューなどの操作通知を、非同期処理として購読できるようにする。
         public System.IDisposable SubscribeNotifyEvent(System.Func<Actions, UniTask> selectable)
         {
+            var cancelToken = gameObject.GetCancellationTokenOnDestroy();
             return _onNotifyEvent.Subscribe(async s =>
             {
                 _nowProcessing = true;
                 try
                 {
-                    await selectable(s);
+                    await selectable(s).AttachExternalCancellation(cancelToken);
                 }
-                catch
+                catch (System.OperationCanceledException) when (cancelToken.IsCancellationRequested)
                 {
                 }
-                _nowProcessing = false;
-            });
+                catch (System.Exception exception)
+                {
+                    Debug.LogException(exception, this);
+                }
+                finally
+                {
+                    _nowProcessing = false;
+                }
+            }).AddTo(this);
         }
         // イベント発行
         public async UniTask NotifyEvent(Actions action)
@@ -394,6 +404,7 @@ namespace SGGames.Game.Sys
 
         public bool SelectLeft()
         {
+            if (!CanReceiveInput) return false;
             if (!IsActive()) return false;
     //        if (!IsActive() || !IsInteractable()) return false;
 
@@ -420,6 +431,7 @@ namespace SGGames.Game.Sys
         }
         public bool SelectRight()
         {
+            if (!CanReceiveInput) return false;
             if (!IsActive()) return false;
     //        if (!IsActive() || !IsInteractable()) return false;
 
@@ -446,6 +458,7 @@ namespace SGGames.Game.Sys
         }
         public bool SelectUp()
         {
+            if (!CanReceiveInput) return false;
             if (!IsActive()) return false;
     //        if (!IsActive() || !IsInteractable()) return false;
 
@@ -472,6 +485,7 @@ namespace SGGames.Game.Sys
         }
         public bool SelectDown()
         {
+            if (!CanReceiveInput) return false;
             if (!IsActive()) return false;
     //        if (!IsActive() || !IsInteractable()) return false;
 
@@ -514,6 +528,7 @@ namespace SGGames.Game.Sys
         // 決定入力時の通知、UnityEvent、必要なら外部の非同期処理まで順番に実行する。
         public async UniTask ExecDecideProc(bool isGamepad)
         {
+            if (!CanReceiveInput) return;
             if (!IsActive() || !IsInteractable()) return;
 
             var cancelToken = this.GetCancellationTokenOnDestroy();
@@ -528,6 +543,7 @@ namespace SGGames.Game.Sys
             // 決定時 通知
             await NotifyEvent(Actions.Decide);
             if (cancelToken.IsCancellationRequested) return;
+            if (!CanReceiveInput) return;
 
             /*
             // 特殊処理
@@ -616,6 +632,7 @@ namespace SGGames.Game.Sys
                 {
                     _focusSelectable.OnSelectAsObservable().Subscribe(_ =>
                     {
+                        if (!CanReceiveInput) return;
                         if (Cursor.visible == false) return;
 
                         if (!IsActive()) return;
@@ -840,6 +857,7 @@ namespace SGGames.Game.Sys
         // マウス移動で項目に触れた時、必要に応じてこの項目へフォーカスを移す。
         void IPointerMoveHandler.OnPointerMove(PointerEventData eventData)
         {
+            if (!CanReceiveInput) return;
             if (Cursor.visible == false) return;
 
             if (!IsActive()) return;
@@ -866,6 +884,7 @@ namespace SGGames.Game.Sys
 
         public override void OnPointerExit(PointerEventData eventData)
         {
+            if (!CanReceiveInput) return;
             if (Cursor.visible == false) return;
             base.OnPointerExit(eventData);
 
@@ -889,6 +908,7 @@ namespace SGGames.Game.Sys
         // 押した瞬間に決定扱いする設定の場合、ここで操作結果を一時保存する。
         public override void OnPointerDown(PointerEventData eventData)
         {
+            if (!CanReceiveInput) return;
             if (Cursor.visible == false) return;
 
     //        if (!IsActive() || !IsInteractable()) return;
@@ -931,6 +951,7 @@ namespace SGGames.Game.Sys
         // クリック完了時に決定扱いする設定の場合、ここで操作結果を一時保存する。
         public virtual void OnPointerClick(PointerEventData eventData)
         {
+            if (!CanReceiveInput) return;
             if (Cursor.visible == false) return;
 
     //        if (!IsActive() || !IsInteractable()) return;

@@ -95,6 +95,8 @@ namespace SGGames.Game.Sys
             if (sceneIdentifier == null) return;
             if (IsProcessingSceneChange) return;
 
+            var cancelToken = this.GetCancellationTokenOnDestroy();
+            cancelToken.ThrowIfCancellationRequested();
             IPlayerInputManager inputManager = IPlayerInputManager.Instance;
             System.IDisposable inputBlock = null;
             bool transitionFailed = false;
@@ -110,11 +112,16 @@ namespace SGGames.Game.Sys
 
                 if (IWindowManager.Instance != null)
                 {
-                    await IWindowManager.Instance.RequestFade(fadeColor, FadeTypes.FadeOut, fadeOutDurationMilliseconds, priority);
+                    await IWindowManager.Instance.RequestFade(fadeColor, FadeTypes.FadeOut, fadeOutDurationMilliseconds, priority)
+                        .AttachExternalCancellation(cancelToken);
                 }
+                cancelToken.ThrowIfCancellationRequested();
 
-                await GlobalSceneNavigator.Instance.Replace(sceneIdentifier);
-                await UniTask.DelayFrame(1);
+                await GlobalSceneNavigator.Instance.Replace(sceneIdentifier, cancellationToken: cancelToken)
+                    .AttachExternalCancellation(cancelToken);
+                cancelToken.ThrowIfCancellationRequested();
+                await UniTask.DelayFrame(1, cancellationToken: cancelToken);
+                cancelToken.ThrowIfCancellationRequested();
 
                 if (ICameraManager.Instance != null)
                 {
@@ -124,8 +131,10 @@ namespace SGGames.Game.Sys
                 // シーン差し替え後、1フレーム待って新しいUIが出揃ってからFadeInを始める.
                 if (IWindowManager.Instance != null)
                 {
-                    await IWindowManager.Instance.RequestFade(fadeColor, FadeTypes.FadeIn, fadeInDurationMilliseconds, priority);
+                    await IWindowManager.Instance.RequestFade(fadeColor, FadeTypes.FadeIn, fadeInDurationMilliseconds, priority)
+                        .AttachExternalCancellation(cancelToken);
                 }
+                cancelToken.ThrowIfCancellationRequested();
             }
             catch
             {
@@ -133,10 +142,14 @@ namespace SGGames.Game.Sys
                 try
                 {
                     // 失敗時は演出を待たず、フェード幕とRaycastによる入力遮断を解除する。
-                    if (IWindowManager.Instance != null)
+                    if (!cancelToken.IsCancellationRequested && IWindowManager.Instance != null)
                     {
-                        await IWindowManager.Instance.RequestFade(fadeColor, FadeTypes.FadeIn, 0, priority);
+                        await IWindowManager.Instance.RequestFade(fadeColor, FadeTypes.FadeIn, 0, priority)
+                            .AttachExternalCancellation(cancelToken);
                     }
+                }
+                catch (System.OperationCanceledException) when (cancelToken.IsCancellationRequested)
+                {
                 }
                 catch (System.Exception exception)
                 {

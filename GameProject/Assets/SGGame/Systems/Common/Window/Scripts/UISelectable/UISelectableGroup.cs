@@ -41,6 +41,23 @@ namespace SGGames.Game.Sys
         // 現在このGroupに参加している選択候補。Priority順に並べて利用する。
         public IReadOnlyList<UISelectable> Members => _members;
 
+        public bool CanReceiveInput => this != null && isActiveAndEnabled
+            && IWindowManager.Instance != null && IWindowManager.Instance.CanReceiveInput(transform);
+
+        void ClearPendingActions()
+        {
+            foreach (var selectable in _members)
+                if (selectable != null) selectable.ClearAction();
+            foreach (var selectable in _reservedAdd)
+                if (selectable != null) selectable.ClearAction();
+            if (_currentSelected != null) _currentSelected.ClearAction();
+        }
+
+        void OnDisable()
+        {
+            ClearPendingActions();
+        }
+
         UISelectable GetTopSelectable()
         {
             foreach (var s in _members)
@@ -146,6 +163,8 @@ namespace SGGames.Game.Sys
                 {
                     // 追加予約がある場合
                     UpdateReservedItems();
+
+                    if (!CanReceiveInput) ClearPendingActions();
 
                     // カーソル処理
                     _cursorObjectData.Update();
@@ -293,12 +312,14 @@ namespace SGGames.Game.Sys
     //            return (UISelectable.Actions.None, null);
 
             // 無効化状態
-            if(isActiveAndEnabled == false)
+            if (!CanReceiveInput)
             {
+                ClearPendingActions();
                 return (UISelectable.Actions.None, null);
             }
 
             var inputUI = IPlayerInputManager.Instance.UIAction;
+            var cancelToken = this.GetCancellationTokenOnDestroy();
 
             try
             {
@@ -348,7 +369,9 @@ namespace SGGames.Game.Sys
                             // 決定時処理
                             if (CurrentSelected.IsInteractable())
                             {
-                                await CurrentSelected.ExecDecideProc(true);
+                                await CurrentSelected.ExecDecideProc(true).AttachExternalCancellation(cancelToken);
+                                cancelToken.ThrowIfCancellationRequested();
+                                if (!CanReceiveInput) return (UISelectable.Actions.None, null);
 
                                 if(CurrentSelected != null)
                                     return (UISelectable.Actions.Decide, CurrentSelected);
@@ -362,7 +385,7 @@ namespace SGGames.Game.Sys
     //                                ISoundManager.Instance.GetUISE(_uiseDisable)
     //                            );
 
-                                await CurrentSelected.NotifyEvent(UISelectable.Actions.CantDecide);
+                                await CurrentSelected.NotifyEvent(UISelectable.Actions.CantDecide).AttachExternalCancellation(cancelToken);
 
                                 return (UISelectable.Actions.None, null);
                             }
@@ -391,7 +414,9 @@ namespace SGGames.Game.Sys
                             // 決定時処理
                             if (CurrentSelected.IsInteractable())
                             {
-                                await CurrentSelected.ExecDecideProc(true);
+                                await CurrentSelected.ExecDecideProc(true).AttachExternalCancellation(cancelToken);
+                                cancelToken.ThrowIfCancellationRequested();
+                                if (!CanReceiveInput) return (UISelectable.Actions.None, null);
 
                                 if (CurrentSelected != null)
                                     return (UISelectable.Actions.Decide, CurrentSelected);
@@ -410,7 +435,7 @@ namespace SGGames.Game.Sys
     //                                ISoundManager.Instance.GetUISE(_uiseDisable)
     //                            );
 
-                                await CurrentSelected.NotifyEvent(UISelectable.Actions.CantDecide);
+                                await CurrentSelected.NotifyEvent(UISelectable.Actions.CantDecide).AttachExternalCancellation(cancelToken);
                             }
                             return (UISelectable.Actions.None, null);
                         }
@@ -421,7 +446,9 @@ namespace SGGames.Game.Sys
                             // メニュー時 通知
                             if (CurrentSelected.IsInteractable())
                             {
-                                await CurrentSelected.NotifyEvent(UISelectable.Actions.Menu);
+                                await CurrentSelected.NotifyEvent(UISelectable.Actions.Menu).AttachExternalCancellation(cancelToken);
+                                cancelToken.ThrowIfCancellationRequested();
+                                if (!CanReceiveInput) return (UISelectable.Actions.None, null);
 
                                 return (UISelectable.Actions.Menu, CurrentSelected);
                             }
@@ -449,8 +476,13 @@ namespace SGGames.Game.Sys
                     }
                 }
             }
-            catch
+            catch (System.OperationCanceledException exception) when (exception.CancellationToken.IsCancellationRequested)
             {
+                return (UISelectable.Actions.None, null);
+            }
+            catch (System.Exception exception)
+            {
+                Debug.LogException(exception, this);
                 return (UISelectable.Actions.None, null);
             }
 

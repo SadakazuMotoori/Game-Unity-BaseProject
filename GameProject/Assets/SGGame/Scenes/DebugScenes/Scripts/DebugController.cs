@@ -60,6 +60,7 @@ namespace SGGames.Game.Develop
         private void Update()
         {
             if (_systemChecks != null && _systemChecks.IsOpen) return;
+            if (IWindowManager.Instance != null && !IWindowManager.Instance.CanReceiveInput(transform)) return;
 
             // 常駐システムは具象クラスではなく、ServiceLocator経由のInterfaceから取得する.
             IPlayerInputManager inputManager = IPlayerInputManager.Instance;

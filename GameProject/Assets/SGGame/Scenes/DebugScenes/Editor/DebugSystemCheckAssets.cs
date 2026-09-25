@@ -15,12 +15,6 @@ namespace SGGames.Game.Develop.Editor
         const string kGroupName = "Debug System Checks";
         const string kFontPath = "Assets/Plugins/TextMesh Pro/Resources/Fonts & Materials/NotoSansJP-Bold SDF.asset";
 
-        [InitializeOnLoadMethod]
-        static void Initialize()
-        {
-            EditorApplication.delayCall += Ensure;
-        }
-
         [MenuItem("SGGame/Debug/Prepare System Checks")]
         public static void Ensure()
         {

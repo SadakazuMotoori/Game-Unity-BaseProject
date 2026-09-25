@@ -64,6 +64,7 @@ namespace SGGames.Game.Sys
     public interface IWindowManager : IService<IWindowManager>
     {
         void SetNormalWindow(NormalWindow window);
+        bool CanReceiveInput(Transform target);
         UniTask RequestFade(FadeColors fadeColor, FadeTypes fadeType, int durationMilliseconds, FadePriorities priority);
         UniTask<TWindow> CreateWindow<TWindow>(object assetAddress, System.Func<TWindow, UniTask> onInitialize) where TWindow : WindowBase;
         UniTask CloseWindow(WindowBase window);
@@ -120,6 +121,8 @@ namespace SGGames.Game.Sys
 
 
         NormalWindow _currentNormalWindow = null;
+        PopupWindow _inputPopup;
+        int _inputPopupChangedFrame = -1;
 
         void Initialize()
         {
@@ -178,7 +181,7 @@ namespace SGGames.Game.Sys
                 .Subscribe(_ =>
                 {
                     ChangeInputMode();
-                });
+                }).AddTo(this);
         }
 
         //==========================================================================
@@ -191,6 +194,35 @@ namespace SGGames.Game.Sys
         {
             // Popupが無い時の入力Map参照先として、現在の通常Windowを保持する.
             _currentNormalWindow = window;
+        }
+
+        public bool CanReceiveInput(Transform target)
+        {
+            if (this == null || !isActiveAndEnabled || target == null) return false;
+
+            PopupWindow topPopup = null;
+            if (_popupWindowGroup != null)
+            {
+                for (int i = _popupWindowGroup.childCount - 1; i >= 0; i--)
+                {
+                    var popup = _popupWindowGroup.GetChild(i).GetComponent<PopupWindow>();
+                    if (popup == null || !popup.gameObject.activeInHierarchy) continue;
+                    topPopup = popup;
+                    break;
+                }
+            }
+
+            if (!ReferenceEquals(_inputPopup, topPopup))
+            {
+                _inputPopup = topPopup;
+                _inputPopupChangedFrame = Time.frameCount;
+            }
+
+            // 前面の切り替わったフレームは、同じ決定入力を次の画面へ渡さない。
+            if (_inputPopupChangedFrame == Time.frameCount) return false;
+            if (IPlayerInputManager.Instance == null || IPlayerInputManager.Instance.IsInputBlocked) return false;
+            return topPopup == null || (topPopup.NowState == WindowBase.WindowStates.Shown
+                && target.IsChildOf(topPopup.transform));
         }
 
         //==========================================================================
@@ -235,7 +267,9 @@ namespace SGGames.Game.Sys
                 .SetLink(_imgFadeCurtrain.gameObject);
             _tweenFadeCurtain = tween;
 
-            await tween;
+            var cancelToken = this.GetCancellationTokenOnDestroy();
+            await tween.ToUniTask(cancellationToken: cancelToken);
+            cancelToken.ThrowIfCancellationRequested();
 
             if (_tweenFadeCurtain != tween) return;
 
@@ -316,7 +350,7 @@ namespace SGGames.Game.Sys
         //==========================================================================
         public async UniTask<TWindow> CreateWindow<TWindow>(object assetAddress, System.Func<TWindow, UniTask> onInitialize) where TWindow : WindowBase
         {
-            var cancelToken = gameObject.GetCancellationTokenOnDestroy();
+            var cancelToken = this.GetCancellationTokenOnDestroy();
             cancelToken.ThrowIfCancellationRequested();
 
             // アセットをロードする.
@@ -375,7 +409,7 @@ namespace SGGames.Game.Sys
         async UniTask InitWindow<TWindow>(TWindow window, System.Func<TWindow, UniTask> onInitialize) where TWindow : WindowBase
         {
             using var linkedCancellation = System.Threading.CancellationTokenSource.CreateLinkedTokenSource(
-                gameObject.GetCancellationTokenOnDestroy(), window.gameObject.GetCancellationTokenOnDestroy());
+                this.GetCancellationTokenOnDestroy(), window.gameObject.GetCancellationTokenOnDestroy());
             var cancelToken = linkedCancellation.Token;
             cancelToken.ThrowIfCancellationRequested();
 
@@ -418,7 +452,7 @@ namespace SGGames.Game.Sys
             if (window == null || window.NowState == WindowBase.WindowStates.Closeing) return;
 
             using var linkedCancellation = System.Threading.CancellationTokenSource.CreateLinkedTokenSource(
-                gameObject.GetCancellationTokenOnDestroy(), window.gameObject.GetCancellationTokenOnDestroy());
+                this.GetCancellationTokenOnDestroy(), window.gameObject.GetCancellationTokenOnDestroy());
             var cancelToken = linkedCancellation.Token;
             cancelToken.ThrowIfCancellationRequested();
 

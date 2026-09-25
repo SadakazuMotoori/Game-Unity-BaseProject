@@ -41,9 +41,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 6472225278797691033}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1b2c62ac3bcd44fb9e09835581422057, type: 3}
+  m_Script: {fileID: 11500000, guid: bdbc4ec74ee74c7a85a06c3cb85678ed, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: VContainer::VContainer.Unity.LifetimeScope
+  m_EditorClassIdentifier: Assembly-CSharp::SGGames.Game.Sys.BootSceneLifetimeScope
   parentReference:
     TypeName: 
   autoRun: 0

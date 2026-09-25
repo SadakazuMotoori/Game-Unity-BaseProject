@@ -20,6 +20,7 @@ using UnityEditor.SceneManagement;
 #endif
 using UnityEngine.SceneManagement;
 using VContainer.Unity;
+using MackySoft.Navigathena.SceneManagement;
 
 namespace SGGames.Game.Sys
 {
@@ -44,6 +45,10 @@ namespace SGGames.Game.Sys
         //==========================================================================
         protected override async UniTask<LifetimeScope> EnsureParentScope(CancellationToken cancellationToken)
         {
+            using var linkedCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, this.GetCancellationTokenOnDestroy());
+            cancellationToken = linkedCancellation.Token;
+            cancellationToken.ThrowIfCancellationRequested();
+
             // PersistentSceneが未ロードなら追加ロードし、以降のシーンの親Scopeとして使う.
             if (!SceneManager.GetSceneByName(kPersistentSceneName).isLoaded)
             {
@@ -59,12 +64,51 @@ namespace SGGames.Game.Sys
     #endif
 
             // PersistentSceneのLifetimeScopeコンテナを構築する.
-            if (persistentScene.TryGetComponentInScene(out LifetimeScope persistentLifetimeScope, true) && persistentLifetimeScope.Container == null)
+            if (!persistentScene.TryGetComponentInScene(out PersistentSceneLifetimeScope persistentLifetimeScope, true) || !persistentLifetimeScope.isActiveAndEnabled)
+            {
+                throw new System.InvalidOperationException("PersistentSceneに有効なPersistentSceneLifetimeScopeがありません。");
+            }
+            if (persistentLifetimeScope.Container == null)
             {
                 await UniTask.SwitchToMainThread(cancellationToken);
                 persistentLifetimeScope.Build();
             }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            persistentLifetimeScope.Initialize();
             return persistentLifetimeScope;
+        }
+
+        internal async UniTask RequestInitialSceneChange()
+        {
+            string              _nextSceneName  = "";
+#if !IS_PRODUCT
+            _nextSceneName = "DebugTopScene";
+#else
+            _nextSceneName = "Title";
+#endif
+            if (!SceneManager.GetSceneByName(_nextSceneName).isLoaded)
+            {
+                await ISceneTransitionManager.Instance.RequestSceneChange(_nextSceneName,0);
+            }
+        }
+    }
+
+    public sealed class BootSceneLifecycle : SceneLifecycleBase
+    {
+        readonly BootSceneEntryPoint _bootSceneEntryPoint;
+
+        public BootSceneLifecycle(BootSceneEntryPoint bootSceneEntryPoint)
+        {
+            _bootSceneEntryPoint = bootSceneEntryPoint;
+        }
+
+        protected override UniTask OnEnter(ISceneDataReader reader, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            // Bootのアンロードで遷移を中断しないよう、以降は常駐Managerへ引き渡す。
+            _bootSceneEntryPoint.RequestInitialSceneChange().Forget();
+            return UniTask.CompletedTask;
         }
     }
 }

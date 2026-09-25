@@ -108,6 +108,8 @@ namespace SGGames.Game.Sys
         [SerializeField] GameObject _gameManagerPrefab;
         GameObject _gameManagerInstance;
 
+        public bool IsInitialized { get; private set; }
+
         //==========================================================================
 
         protected override void Configure(IContainerBuilder builder)
@@ -115,31 +117,49 @@ namespace SGGames.Game.Sys
             builder.RegisterSceneLifecycle<PersistentSceneLifecycle>();
         }
     
-        private void Start()
+        public void Initialize()
         {
+            if (IsInitialized) return;
+
             // 常駐Managerは、シーン遷移を始める前に必要な順序で初期化する.
 #if GAME_DEBUG && !IS_PRODUCT
             InitializeDebugSystemManager();
+            if (IDebugSystemManager.Instance == null)
+            {
+                throw new InvalidOperationException("DebugSystemManagerが登録されていないため、起動を中止します。");
+            }
 #endif
             InitializeMainCamera();
+            if (ICameraManager.Instance == null)
+            {
+                throw new InvalidOperationException("CameraManagerが登録されていないため、起動を中止します。");
+            }
             InitializeInputManager();
+            if (!(IPlayerInputManager.Instance is Behaviour inputManager) || !inputManager.isActiveAndEnabled)
+            {
+                throw new InvalidOperationException("有効なPlayerInputManagerが登録されていないため、起動を中止します。");
+            }
             // InitializeSoundManager();
             InitializeWindowManager();
+            if (IWindowManager.Instance == null)
+            {
+                throw new InvalidOperationException("WindowManagerが登録されていないため、起動を中止します。");
+            }
             InitializeSceneTransitionManager();
+            if (ISceneTransitionManager.Instance == null)
+            {
+                throw new InvalidOperationException("SceneTransitionManagerが登録されていないため、起動を中止します。");
+            }
 
             InitializeGameManager();
+            if (IGameManager.Instance == null)
+            {
+                throw new InvalidOperationException("GameManagerが登録されていないため、起動を中止します。");
+            }
 
             // 非製品版はデバッグシーン、製品版はタイトルシーンへ遷移する.
-            string              _nextSceneName  = "";
-#if !IS_PRODUCT
-            _nextSceneName = "DebugTopScene";
-#else
-            _nextSceneName = "Title";
-#endif
-            if (!SceneManager.GetSceneByName(_nextSceneName).isLoaded)
-            {
-                ISceneTransitionManager.Instance.RequestSceneChange(_nextSceneName,0).Forget();
-            }
+            // 遷移先の選択と遷移要求は、初期化完了後にBootSceneEntryPointが行う。
+            IsInitialized = true;
         }
 
         void InitializeInputManager()

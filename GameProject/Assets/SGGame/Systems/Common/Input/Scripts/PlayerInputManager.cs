@@ -52,7 +52,10 @@ namespace SGGames.Game.Sys
 
         // trueの間はUI入力と入力デバイス検知を止め、フェード中などの誤操作を防ぐ.
         bool IsInputBlocked { get; }
+        // 手動の停止状態を設定する。取得済みの停止要求には影響しない。
         void SetInputBlocked(bool isBlocked);
+        // 取得した停止要求はDisposeで解除する。他の要求が残る間は入力停止を維持する。
+        System.IDisposable AcquireInputBlock();
 
         //==========================================================================
         /**
@@ -143,12 +146,34 @@ namespace SGGames.Game.Sys
         public UIActions UIAction => _uiAction;
 
         bool _isInputBlocked;
+        bool _isInputBlockedManually;
+        int _inputBlockCount;
         public bool IsInputBlocked => _isInputBlocked;
         public void SetInputBlocked(bool isBlocked)
         {
             // Manager本体とUIActionsの両方へ同じブロック状態を反映する.
-            _isInputBlocked = isBlocked;
-            _uiAction.SetInputBlocked(isBlocked);
+            _isInputBlockedManually = isBlocked;
+            UpdateInputBlocked();
+        }
+
+        public System.IDisposable AcquireInputBlock()
+        {
+            var inputBlock = Disposable.Create(this, owner =>
+            {
+                if (owner == null) return;
+
+                owner._inputBlockCount--;
+                owner.UpdateInputBlocked();
+            });
+            _inputBlockCount++;
+            UpdateInputBlocked();
+            return inputBlock;
+        }
+
+        void UpdateInputBlocked()
+        {
+            _isInputBlocked = _isInputBlockedManually || _inputBlockCount > 0;
+            _uiAction.SetInputBlocked(_isInputBlocked);
         }
 
 

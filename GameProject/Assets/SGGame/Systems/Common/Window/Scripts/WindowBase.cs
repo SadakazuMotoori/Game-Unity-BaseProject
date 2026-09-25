@@ -46,7 +46,14 @@ namespace SGGames.Game.Sys
         public WindowStates NowState { get; set; } = WindowStates.None;
 
         // 表示演出が完了し、WindowManagerから安全に閉じられる状態になるまで待つ.
-        public async UniTask WaitForShown() => await UniTask.WaitUntil(() => NowState == WindowStates.Shown);
+        public async UniTask WaitForShown(System.Threading.CancellationToken cancellationToken = default)
+        {
+            using var linkedCancellation = System.Threading.CancellationTokenSource.CreateLinkedTokenSource(
+                cancellationToken, gameObject.GetCancellationTokenOnDestroy());
+            await UniTask.WaitUntil(
+                () => NowState == WindowStates.Shown || NowState == WindowStates.Closeing,
+                cancellationToken: linkedCancellation.Token);
+        }
 
         // Windowの破棄処理は、状態管理を持つWindowManagerへ依頼する.
         public async UniTask CloseWindow()

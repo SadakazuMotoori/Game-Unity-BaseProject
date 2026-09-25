@@ -316,33 +316,53 @@ namespace SGGames.Game.Sys
         //==========================================================================
         public async UniTask<TWindow> CreateWindow<TWindow>(object assetAddress, System.Func<TWindow, UniTask> onInitialize) where TWindow : WindowBase
         {
+            var cancelToken = gameObject.GetCancellationTokenOnDestroy();
+            cancelToken.ThrowIfCancellationRequested();
+
             // アセットをロードする.
             var handle = UnityEngine.AddressableAssets.Addressables.LoadAssetAsync<GameObject>(assetAddress);
-            // ロード完了を待つ.
-            var asset = await handle;
-            if(asset == null)
+            var releaseHandle = Disposable.Create(() => UnityEngine.AddressableAssets.Addressables.Release(handle));
+            GameObject goWindow = null;
+            bool releaseOnDestroy = false;
+            try
             {
-                return null;
-            }
-
-            // Windowの親Transformを取得する.
-            Transform parent = _popupWindowGroup;
-
-            // Windowを生成する.
-            var goWindow = Instantiate(asset, parent);
-            var window = goWindow.GetComponent<TWindow>();
-
-            // Window破棄時にアセットハンドルも解放されるように登録する.
-            goWindow.OnDestroyAsObservable()
-                .Subscribe(_ =>
+                // ロード完了を待つ.
+                var asset = await handle.ToUniTask().AttachExternalCancellation(cancelToken);
+                cancelToken.ThrowIfCancellationRequested();
+                if(asset == null)
                 {
-                    UnityEngine.AddressableAssets.Addressables.Release(handle);
-                });
+                    return null;
+                }
 
-            // Windowを初期化する.
-            await InitWindow(window, onInitialize);
+                // Windowの親Transformを取得する.
+                Transform parent = _popupWindowGroup;
 
-            return window;
+                // Windowを生成する.
+                goWindow = Instantiate(asset, parent);
+                var window = goWindow.GetComponent<TWindow>();
+
+                // Window破棄時にアセットハンドルも解放されるように登録する.
+                releaseHandle.AddTo(goWindow);
+                releaseOnDestroy = true;
+                if (window == null)
+                {
+                    throw new System.InvalidOperationException($"Window asset '{assetAddress}' does not contain {typeof(TWindow).Name}.");
+                }
+
+                // Windowを初期化する.
+                await InitWindow(window, onInitialize);
+
+                return window;
+            }
+            catch
+            {
+                if (goWindow != null) Destroy(goWindow);
+                throw;
+            }
+            finally
+            {
+                if (!releaseOnDestroy) releaseHandle.Dispose();
+            }
         }
 
         //==========================================================================
@@ -354,25 +374,35 @@ namespace SGGames.Game.Sys
         //==========================================================================
         async UniTask InitWindow<TWindow>(TWindow window, System.Func<TWindow, UniTask> onInitialize) where TWindow : WindowBase
         {
+            using var linkedCancellation = System.Threading.CancellationTokenSource.CreateLinkedTokenSource(
+                gameObject.GetCancellationTokenOnDestroy(), window.gameObject.GetCancellationTokenOnDestroy());
+            var cancelToken = linkedCancellation.Token;
+            cancelToken.ThrowIfCancellationRequested();
+
             // 非表示状態で初期化する.
             window.gameObject.SetActive(false);
+            cancelToken.ThrowIfCancellationRequested();
 
             window.NowState = WindowBase.WindowStates.Initializing;
             // 引数で指定された外部初期化関数を実行する.
             if(onInitialize != null)
             {
-                await onInitialize(window);
+                await onInitialize(window).AttachExternalCancellation(cancelToken);
+                cancelToken.ThrowIfCancellationRequested();
             }
             // Windowの初期化関数を実行する.
-            await window.OnInitialize();
+            await window.OnInitialize().AttachExternalCancellation(cancelToken);
+            cancelToken.ThrowIfCancellationRequested();
             window.NowState = WindowBase.WindowStates.Initialized;
 
             // Activeにして表示処理へ進める.
             window.gameObject.SetActive(true);
+            cancelToken.ThrowIfCancellationRequested();
 
             window.NowState = WindowBase.WindowStates.Showing;
             // Windowの表示関数を実行する.
-            await window.OnShow();
+            await window.OnShow().AttachExternalCancellation(cancelToken);
+            cancelToken.ThrowIfCancellationRequested();
             window.NowState = WindowBase.WindowStates.Shown;
         }
 
@@ -385,17 +415,31 @@ namespace SGGames.Game.Sys
         public async UniTask CloseWindow(WindowBase window)
         {
             // 既に終了中なら何もしない.
-            if (window.NowState == WindowBase.WindowStates.Closeing) return;
+            if (window == null || window.NowState == WindowBase.WindowStates.Closeing) return;
+
+            using var linkedCancellation = System.Threading.CancellationTokenSource.CreateLinkedTokenSource(
+                gameObject.GetCancellationTokenOnDestroy(), window.gameObject.GetCancellationTokenOnDestroy());
+            var cancelToken = linkedCancellation.Token;
+            cancelToken.ThrowIfCancellationRequested();
 
             // 表示状態まで待つ.
-            await window.WaitForShown();
+            await window.WaitForShown(cancelToken);
+            cancelToken.ThrowIfCancellationRequested();
+            if (window.NowState == WindowBase.WindowStates.Closeing) return;
 
             // 破棄時の処理を実行する.
             window.NowState = WindowBase.WindowStates.Closeing;
-            await window.OnClose();
+            try
+            {
+                await window.OnClose().AttachExternalCancellation(cancelToken);
+                cancelToken.ThrowIfCancellationRequested();
+            }
+            finally
+            {
 
-            // Windowを破棄する.
-            Destroy(window.gameObject);
+                // Windowを破棄する.
+                if (window != null) Destroy(window.gameObject);
+            }
         }
     }
 

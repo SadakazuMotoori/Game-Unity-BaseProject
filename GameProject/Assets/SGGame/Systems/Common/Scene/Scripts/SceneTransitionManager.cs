@@ -95,14 +95,17 @@ namespace SGGames.Game.Sys
             if (sceneIdentifier == null) return;
             if (IsProcessingSceneChange) return;
 
+            IPlayerInputManager inputManager = IPlayerInputManager.Instance;
+            System.IDisposable inputBlock = null;
+            bool transitionFailed = false;
             IsProcessingSceneChange = true;
 
             try
             {
                 // FadeOutからFadeInが終わるまで入力を止め、遷移中の誤操作を防ぐ.
-                if (IPlayerInputManager.Instance != null)
+                if (inputManager != null)
                 {
-                    IPlayerInputManager.Instance.SetInputBlocked(true);
+                    inputBlock = inputManager.AcquireInputBlock();
                 }
 
                 if (IWindowManager.Instance != null)
@@ -124,14 +127,37 @@ namespace SGGames.Game.Sys
                     await IWindowManager.Instance.RequestFade(fadeColor, FadeTypes.FadeIn, fadeInDurationMilliseconds, priority);
                 }
             }
+            catch
+            {
+                transitionFailed = true;
+                try
+                {
+                    // 失敗時は演出を待たず、フェード幕とRaycastによる入力遮断を解除する。
+                    if (IWindowManager.Instance != null)
+                    {
+                        await IWindowManager.Instance.RequestFade(fadeColor, FadeTypes.FadeIn, 0, priority);
+                    }
+                }
+                catch (System.Exception exception)
+                {
+                    DebugLog.Error(SystemConst.DebugGroup.System, exception);
+                }
+                throw;
+            }
             finally
             {
-                if (IPlayerInputManager.Instance != null)
+                try
                 {
-                    IPlayerInputManager.Instance.SetInputBlocked(false);
+                    inputBlock?.Dispose();
                 }
-
-                IsProcessingSceneChange = false;
+                catch (System.Exception exception) when (transitionFailed)
+                {
+                    DebugLog.Error(SystemConst.DebugGroup.System, exception);
+                }
+                finally
+                {
+                    IsProcessingSceneChange = false;
+                }
             }
         }
     }
